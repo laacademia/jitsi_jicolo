@@ -69,24 +69,49 @@ class recurso_conference implements SIUToba\rest\lib\modelable
     * @responses 409 Conference already exists
     */
     function post_list()
-    {
-        $datos = rest::request()->get_body_json();
-        //si existe la sala
-        $conference = modelo_conference::get_conference("name='{$datos['name']}'");
-        if(count($conference)>0){                        
-            rest::response()->error_negocio(array('conflic_id'=>$conference[0]['id']),409);
-        }else{
-        //creacion de la sala
-            $datos['start_time'] = $this->SimpleDateTotimestamp($datos['start_time']);
-            if(!isset($datos['duration']))
-                $datos['duration'] = toba::proyecto()->get_parametro('jitsi','duracion_sala');
+    {        
+        $string = rest::request()->get_body();
+        if($this->parametros_post_validos($string)){
+            $datos = $this->parse_body_post($string);            
 
-            $new_conference = modelo_conference::insert($datos);   
-            if($new_conference)
-                rest::response()->post($new_conference);
-            else
-              rest::response()->error_negocio(array('message'=>'error'),400);  
-        }        
+            //si existe la sala
+            $conference = modelo_conference::get_conference("name='{$datos['name']}'");
+            if(count($conference)>0){                        
+                rest::response()->error_negocio(array('conflic_id'=>$conference[0]['id']),409);
+            }else{
+            //creacion de la sala                            
+                $new_conference = modelo_conference::insert($datos);   
+                
+                if($new_conference)
+                    rest::response()->post($new_conference);
+                else
+                  rest::response()->error_negocio(array('message'=>'error'),400);  
+            }        
+        }else{
+            rest::response()->error_negocio(array('message'=>'error en los parametros'),400);
+        }
+    }
+    function parametros_post_validos($query_string){
+        $obligatorios = array('name','mail_owner','start_time');
+        foreach ($obligatorios as $key => $campo) {            
+           if(strpos($query_string, $campo)===false){
+                return false;
+           } 
+        }
+        return true;
+    }    
+    function parse_body_post($query_string){
+        $query_string = str_replace("%40","@",$query_string);
+        $query_string = str_replace("%3A",":",$query_string);        
+        parse_str($query_string); //hace el explode
+
+        if(!isset($duration))
+            $duration = toba::proyecto()->get_parametro('jitsi','duracion_sala');
+
+        return array('name' => $name,
+                    'mail_owner' => $mail_owner,
+                    'start_time' => $this->SimpleDateTotimestamp($start_time),
+                    'duration' => $duration);
     }
 
     /*
@@ -100,8 +125,7 @@ class recurso_conference implements SIUToba\rest\lib\modelable
     * @responses 409 Conference already exists
     */
     function delete($id_conference)
-    {
-        
+    {    
         $ok = modelo_conference::delete($id_conference);
         $errores = array();
         if (!$ok) {
