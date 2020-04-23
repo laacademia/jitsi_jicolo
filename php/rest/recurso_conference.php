@@ -106,7 +106,7 @@ class recurso_conference implements SIUToba\rest\lib\modelable
         $query_string = str_replace("%3A",":",$query_string);        
         parse_str($query_string); //hace el explode
 
-        if(!isset($duration))
+        //if(!isset($duration))
             $duration = toba::proyecto()->get_parametro('jitsi','duracion_sala');
 
         return array('name' => $name,
