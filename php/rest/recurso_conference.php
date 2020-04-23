@@ -85,12 +85,13 @@ class recurso_conference implements SIUToba\rest\lib\modelable
                 if($new_conference)
                     rest::response()->post($new_conference);
                 else
-                  rest::response()->error_negocio(array('message'=>'error'),400);  
+                  rest::response()->error_negocio(array('message'=>'No se pudo generar la conferencia'),403);  
             }        
         }else{
             rest::response()->error_negocio(array('message'=>'error en los parametros'),400);
         }
     }
+
     function parametros_post_validos($query_string){
         $obligatorios = array('name','mail_owner','start_time');
         foreach ($obligatorios as $key => $campo) {            
